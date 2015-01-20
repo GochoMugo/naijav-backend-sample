@@ -45,7 +45,7 @@ connection.query("USE " + mysqlVars.database, function(err) {
 
 // Creating necessary tables
 var tables = {
-  "members": "email text, password text, email_updates bool"
+  "members": "username text, email text, password text, email_updates bool"
 };
 for (var table in tables) {
   var sqlStr = util.format("CREATE TABLE IF NOT EXISTS %s (%s)", table, tables[table]);

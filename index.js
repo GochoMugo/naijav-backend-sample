@@ -171,12 +171,31 @@ app.post("/members/login",
     });
 });
 
-// User data
+// Retrieving User data
 app.get("/members/settings",
   utils.ensureLoggedInFailFast,
   function(req, res) {
     res.json({
       email_updates: req.user["email_updates"]
+    });
+});
+
+// Saving user data
+app.post("/members/settings",
+  utils.ensureLoggedInFailFast,
+  function(req, res) {
+    // for now we shall require all settings be passed along with request
+    var missingParam = utils.checkParams(req, ["email_updates"]);
+    if (missingParam) {
+      return res.status(400).json({message: "missing parameter", param: missingParam});
+    }
+    var sqlStr = util.format(utils.sqlStr["storeSettings"], req.param("email_updates"), req.user.id);
+    connection.query(sqlStr, function(err) {
+      if (err) {
+        debug("error storing settings: %j", err);
+        return res.status(500).json({message: "server goofed up!"});
+      }
+      return res.json({message: "settings saved!"});
     });
 });
 

@@ -16,7 +16,8 @@ exports.sqlStr = {
   insertMember: 'insert into members(username, email, password) values("%s", "%s", "%s")',
   lookupMember: 'select * from members where username="%s" or email="%s" ',
   lookupMemberId: 'select * from members where id="%s" ',
-  storeFeedback: 'insert into feedback(userId, feedback) values("%s", "%s") '
+  storeFeedback: 'insert into feedback(userId, feedback) values("%s", "%s") ',
+  storeSettings: 'update members set email_updates="%s" where id="%s" '
 };
 
 

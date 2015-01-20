@@ -2,12 +2,18 @@
 
 // Node.js modules
 var http = require("http");
+var util = require("util");
 
 // Npm modules
+var bcrypt = require("bcrypt");
 var debug = require("debug")("naijav-backend-sample:index");
 var express = require("express");
 var mysql = require("mysql");
 var passport = require("passport");
+var LocalStrategy = require("passport-http").Strategy;
+
+// own modules
+var utils = require("utils");
 
 // Script variables
 var app = express();
@@ -26,12 +32,20 @@ config.mysql = {};
 config.mysql.host = userConfig.mysql.host || "localhost";
 config.mysql.user = userConfig.mysql.user || "root";
 config.mysql.password = userConfig.mysql.password || "";
+config.mysql.database = userConfig.mysql.database || "test";
 
 //  Creating a mysql connection
 var connection = mysql.createConnection(config.mysql);
 connection.connect(function(err) {
   if (err) { return debug("error connecting to mysql: %s", err.code); }
 });
+
+// passport local stratgey
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+    return done(null, {name: "gocho"});
+  }
+));
 
 // Allowing CORS
 app.use(function(req, res, next) {
@@ -43,20 +57,46 @@ app.use(function(req, res, next) {
 // Member count
 app.get("/members/count", function(req, res) {
   // we shall retrieve data from db about the number of signed up mbrs
-  res.send({count: 201});
+  res.json({count: 201});
 });
 
 // Member signup
 app.post("/members/signup", function(req, res) {
-  // we shall verify and insert data into db
-  res.send({message: "user added"});
+  // Ensuring all values required have been passed
+  var missingParam = utils.checkParams(req, ["username"]);
+  if (missingParam) {
+    return res.status(400).json({
+      message: "missing parameter",
+      param: missingParam
+    });
+  }
+  // Hashing password
+  bcrypt.genSalt(10, function(err, salt) {
+      bcrypt.hash(req.param("password"), salt, function(err, hash) {
+          if (err) {
+            debug("hashing password failed: %j", err);
+            return res.status(500).json({message: "server goofed up!"});
+          }
+          // we now store user details into database
+          var sqlStr = util.format(utils.sqlStr["insertMember"], req.param("username"),
+            req.param("email"), req.param("password"));
+          connection.query(sqlStr, function(err) {
+            if (err) {
+              debug("error storing user details into db: %j", err);
+              return res.status(500).json({message: "server goofed up!"});
+            }
+            return res.json({message: "user created"});
+          }); // connection.query
+      }); // bcrypt.hash
+  }); // bcrypt.genSalt
 });
 
 // Member login
-app.post("/members/login", function(req, res) {
-  // we shall query about user data here
-  res.send({loggedIn: true, info: {}});
-});
+app.post("/members/login",
+  passport.authenticate('local', { session: true }),
+  function(req, res) {
+    res.json(req.user);
+  });
 
 // Starting server
 server.listen(port, function() {

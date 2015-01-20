@@ -7,8 +7,10 @@ var util = require("util");
 // Npm modules
 var bodyParser = require("body-parser");
 var bcrypt = require("bcrypt");
+var cookieParser = require("cookie-parser");
 var debug = require("debug")("naijav-backend-sample:index");
 var express = require("express");
+var expressSession = require("express-session");
 var mysql = require("mysql");
 var passport = require("passport");
 var LocalStrategy = require("passport-local").Strategy;
@@ -20,13 +22,14 @@ var utils = require("./utils");
 var app = express();
 var server = http.Server(app);
 var port = 8090;
+var appSecret = 'FlAtUi*iS!AlL?';
 
 // Getting configuration files from config.json
 var userConfig;
 try {
   userConfig = require("./config.json");
 } catch (err) {
-  userConfig = {msql: {}};
+  userConfig = { msql: { } };
 }
 var config = {};
 config.mysql = {};
@@ -47,20 +50,66 @@ debug("configuring body-parser middleware");
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
-// Adding Passport Initialization middleware
+// Cookie parsing
+debug("configuring cookie parser middleware");
+app.use(cookieParser(appSecret));
+
+// Enabling sessions (Express comes before Passport)
+app.use(expressSession({
+  secret: appSecret,
+  resave: false,
+  saveUninitialized: true
+}));
+
+// Adding Passport Initialization middleware (Must come after express session middleware)
 debug("configuring passport middleware");
 app.use(passport.initialize());
+
+// Enabling passport sessions
+debug("configuring passport session middleware");
+app.use(passport.session());
+
+// Serializing and Deseralizing passport functions
+passport.serializeUser(function(user, done) {
+  done(null, user.username);
+});
+passport.deserializeUser(function(username, done) {
+  var sqlStr = util.format(utils.sqlStr["lookupMember"], username);
+  connection.query(sqlStr, function(err, resultSet) {
+    if (err) {
+      debug("error deserializing user: %j", err);
+      return done(err);
+    }
+    return done(null, resultSet[0]);
+  });
+});
 
 // passport local stratgey
 passport.use(new LocalStrategy(
   function(username, password, done) {
-    return done(null, {name: "gocho"});
+    var sqlStr = util.format(utils.sqlStr["lookupMember"], username);
+    connection.query(sqlStr, function(err, resultSet) {
+      if (err) {
+        debug("error looking up member: %j", err);
+        return done(err);
+      }
+      if (! resultSet[0]) { return done(null, false); }
+      bcrypt.compare(password, resultSet[0]["password"], function(err, res) {
+          if (err) {
+            debug("error comparing password and hash: %j", err);
+            return done(err);
+          }
+          if (! res) { return done(null, false); }
+          return done(null, resultSet[0]);
+      });
+    });
   }
 ));
 
 // Allowing CORS
 app.use(function(req, res, next) {
   debug("hit: %s", req.path);
+  debug(req.user);
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
@@ -117,8 +166,17 @@ app.post("/members/signup", function(req, res) {
 app.post("/members/login",
   passport.authenticate('local', { session: true }),
   function(req, res) {
-    res.json(req.user);
-  });
+    res.json({
+      email_updates: req.user["email_updates"]
+    });
+});
+
+// User data
+app.get("/members/settings",
+  utils.ensureLoggedInFailFast,
+  function(req, res) {
+    res.json({reached: "yes"});
+});
 
 // Starting server
 server.listen(port, function() {

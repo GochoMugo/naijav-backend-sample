@@ -13,5 +13,12 @@ exports.checkParams = function(req, keysArray) {
 
 exports.sqlStr = {
   membersCount: 'select count(*) from members',
-  insertMember: 'insert into members(username, email, password, email_updates) values("%s", "%s", "%s", true)'
+  insertMember: 'insert into members(username, email, password, email_updates) values("%s", "%s", "%s", true)',
+  lookupMember: 'select * from members where username="%s" or email="%s" '
 };
+
+
+exports.ensureLoggedInFailFast = function ensureLoggedIn(req, res, next) {
+  if (! req.user) { return res.status(403).json({message: "unauthenticated"}); }
+  next();
+}

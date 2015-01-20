@@ -41,9 +41,21 @@ app.use(function(req, res, next) {
 
 // Member count
 app.get("/members/count", function(req, res) {
+  // we shall retrieve data from db about the number of signed up mbrs
   res.send({count: 201});
 });
 
+// Member signup
+app.post("/members/signup", function(req, res) {
+  // we shall verify and insert data into db
+  res.send({message: "user added"});
+});
+
+// Member login
+app.post("/members/login", function(req, res) {
+  // we shall query about user data here
+  res.send({loggedIn: true, info: {}});
+});
 
 // Starting server
 server.listen(port, function() {

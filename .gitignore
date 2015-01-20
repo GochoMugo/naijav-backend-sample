@@ -1,0 +1,5 @@
+# npm installed node modules
+node_modules/
+
+# configuration file
+config.json

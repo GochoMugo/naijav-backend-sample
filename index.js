@@ -7,6 +7,7 @@ var http = require("http");
 var debug = require("debug")("naijav-backend-sample:index");
 var express = require("express");
 var mysql = require("mysql");
+var passport = require("passport");
 
 // Script variables
 var app = express();

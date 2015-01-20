@@ -109,7 +109,6 @@ passport.use(new LocalStrategy(
 // Allowing CORS
 app.use(function(req, res, next) {
   debug("hit: %s", req.path);
-  debug(req.user);
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
@@ -175,7 +174,9 @@ app.post("/members/login",
 app.get("/members/settings",
   utils.ensureLoggedInFailFast,
   function(req, res) {
-    res.json({reached: "yes"});
+    res.json({
+      email_updates: req.user["email_updates"]
+    });
 });
 
 // Starting server

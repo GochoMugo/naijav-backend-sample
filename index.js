@@ -68,8 +68,14 @@ app.use(function(req, res, next) {
 
 // Member count
 app.get("/members/count", function(req, res) {
-  // we shall retrieve data from db about the number of signed up mbrs
-  res.json({count: 201});
+  var sqlStr = util.format(utils.sqlStr["membersCount"]);
+  connection.query(sqlStr, function(err, result) {
+    if (err) {
+      debug("getting members count failed: %j", err);
+      return res.status(500).json({message: "our bad!"});
+    }
+    res.json({count: result[0]["count(*)"]});
+  });
 });
 
 // Member signup

@@ -12,5 +12,6 @@ exports.checkParams = function(req, keysArray) {
 
 
 exports.sqlStr = {
+  membersCount: 'select count(*) from members',
   insertMember: 'insert into members(username, email, password, email_updates) values("%s", "%s", "%s", true)'
 };

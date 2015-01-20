@@ -218,6 +218,12 @@ app.post("/members/feedback",
   }
 );
 
+// Logging out
+app.get("/members/logout", function(req, res) {
+  req.session = null;
+  res.json({message: "session destroyed!"});
+});
+
 // Starting server
 server.listen(port, function() {
   debug("server started at port: %d", port);

@@ -13,8 +13,10 @@ exports.checkParams = function(req, keysArray) {
 
 exports.sqlStr = {
   membersCount: 'select count(*) from members',
-  insertMember: 'insert into members(username, email, password, email_updates) values("%s", "%s", "%s", true)',
-  lookupMember: 'select * from members where username="%s" or email="%s" '
+  insertMember: 'insert into members(username, email, password) values("%s", "%s", "%s")',
+  lookupMember: 'select * from members where username="%s" or email="%s" ',
+  lookupMemberId: 'select * from members where id="%s" ',
+  storeFeedback: 'insert into feedback(userId, feedback) values("%s", "%s") '
 };
 
 

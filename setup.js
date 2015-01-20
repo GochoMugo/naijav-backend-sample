@@ -45,7 +45,8 @@ connection.query("USE " + mysqlVars.database, function(err) {
 
 // Creating necessary tables
 var tables = {
-  "members": "username varchar(255) not null unique, email varchar(255) not null unique, password varchar(255), email_updates bool"
+  "members": "id int not null unique auto_increment, username varchar(255) not null unique, email varchar(255) not null unique, password varchar(255), email_updates bool default true, primary key (id)",
+  "feedback": "id int not null unique auto_increment, userId int not null, feedback text, receivedTime timestamp default current_timestamp, primary key(id)"
 };
 for (var table in tables) {
   var sqlStr = util.format("CREATE TABLE IF NOT EXISTS %s (%s)", table, tables[table]);

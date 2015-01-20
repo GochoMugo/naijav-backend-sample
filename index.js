@@ -71,10 +71,10 @@ app.use(passport.session());
 
 // Serializing and Deseralizing passport functions
 passport.serializeUser(function(user, done) {
-  done(null, user.username);
+  done(null, user.id);
 });
-passport.deserializeUser(function(username, done) {
-  var sqlStr = util.format(utils.sqlStr["lookupMember"], username);
+passport.deserializeUser(function(id, done) {
+  var sqlStr = util.format(utils.sqlStr["lookupMemberId"], id);
   connection.query(sqlStr, function(err, resultSet) {
     if (err) {
       debug("error deserializing user: %j", err);
@@ -178,6 +178,25 @@ app.get("/members/settings",
       email_updates: req.user["email_updates"]
     });
 });
+
+// Getting feedback
+app.post("/members/feedback",
+  utils.ensureLoggedInFailFast,
+  function(req, res) {
+    var missingParam = utils.checkParams(req, ["feedback"]);
+    if (missingParam) {
+      return res.status(400).json({message: "missing parameter", param: missingParam});
+    }
+    var sqlStr = util.format(utils.sqlStr["storeFeedback"], req.user.id, req.param("feedback"));
+    connection.query(sqlStr, function(err) {
+      if (err) {
+        debug("error storing feedback: %j", err);
+        return res.status(500).json({message: "server goofed up!"});
+      }
+      return res.json({message: "feedback received!"});
+    });
+  }
+);
 
 // Starting server
 server.listen(port, function() {

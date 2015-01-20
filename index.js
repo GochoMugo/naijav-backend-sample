@@ -5,15 +5,16 @@ var http = require("http");
 var util = require("util");
 
 // Npm modules
+var bodyParser = require("body-parser");
 var bcrypt = require("bcrypt");
 var debug = require("debug")("naijav-backend-sample:index");
 var express = require("express");
 var mysql = require("mysql");
 var passport = require("passport");
-var LocalStrategy = require("passport-http").Strategy;
+var LocalStrategy = require("passport-local").Strategy;
 
 // own modules
-var utils = require("utils");
+var utils = require("./utils");
 
 // Script variables
 var app = express();
@@ -35,10 +36,20 @@ config.mysql.password = userConfig.mysql.password || "";
 config.mysql.database = userConfig.mysql.database || "test";
 
 //  Creating a mysql connection
+debug("connecting to mysql server");
 var connection = mysql.createConnection(config.mysql);
 connection.connect(function(err) {
   if (err) { return debug("error connecting to mysql: %s", err.code); }
 });
+
+// Adding Body-Parsing Middleware using both json & urlencoded
+debug("configuring body-parser middleware");
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: false}));
+
+// Adding Passport Initialization middleware
+debug("configuring passport middleware");
+app.use(passport.initialize());
 
 // passport local stratgey
 passport.use(new LocalStrategy(
@@ -49,6 +60,7 @@ passport.use(new LocalStrategy(
 
 // Allowing CORS
 app.use(function(req, res, next) {
+  debug("hit: %s", req.path);
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
@@ -63,7 +75,8 @@ app.get("/members/count", function(req, res) {
 // Member signup
 app.post("/members/signup", function(req, res) {
   // Ensuring all values required have been passed
-  var missingParam = utils.checkParams(req, ["username"]);
+  debug(req.param("username"))
+  var missingParam = utils.checkParams(req, ["username", "email", "password"]);
   if (missingParam) {
     return res.status(400).json({
       message: "missing parameter",
@@ -79,12 +92,15 @@ app.post("/members/signup", function(req, res) {
           }
           // we now store user details into database
           var sqlStr = util.format(utils.sqlStr["insertMember"], req.param("username"),
-            req.param("email"), req.param("password"));
+            req.param("email"), hash);
           connection.query(sqlStr, function(err) {
             if (err) {
               debug("error storing user details into db: %j", err);
+              if (err.code === "ER_DUP_ENTRY") {
+                return res.status(400).json({message: "user already exists!"});
+              }
               return res.status(500).json({message: "server goofed up!"});
-            }
+            } // if (err)
             return res.json({message: "user created"});
           }); // connection.query
       }); // bcrypt.hash

@@ -32,15 +32,22 @@ connection.connect(function(err) {
   if (err) { return debug("error connecting to mysql: %s", err.code); }
 });
 
+// Allowing CORS
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+
 // Member count
 app.get("/members/count", function(req, res) {
-  res.send(200);
+  res.send({count: 201});
 });
 
 
 // Starting server
 server.listen(port, function() {
-  debug("server started");
+  debug("server started at port: %d", port);
 });
 
 // Exit cleanup

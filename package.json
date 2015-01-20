@@ -1,11 +1,12 @@
 {
   "name": "naijav-backend-sample",
   "dependencies": {
-    "bcrypt": "~0.8.0",
-    "debug": "~2.1.0",
-    "express": "~4.10.7",
-    "mysql": "~2.5.4",
-    "passport": "~0.2.1",
-    "passport-local": "~1.0.0"
+    "bcrypt": "^0.8.0",
+    "body-parser": "^1.10.0",
+    "debug": "^2.1.0",
+    "express": "^4.10.7",
+    "mysql": "^2.5.4",
+    "passport": "^0.2.1",
+    "passport-local": "^1.0.0"
   }
 }
